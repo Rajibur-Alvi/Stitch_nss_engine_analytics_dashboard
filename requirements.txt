@@ -4,3 +4,4 @@ torch
 numpy
 python-multipart
 jinja2
+requests
