@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Request
+from fastapi import FastAPI, UploadFile, File, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -25,7 +25,27 @@ analysis_store: dict = {
     "avg_entropy":      0.0,
     "last_filename":    "",
     "pruning_report":   None,   # PruningReport | None
+    "top_scripts":      [],
+    "active_stream":    False,
 }
+
+# ── WebSocket Manager ────────────────────────────────────────────────
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async contract(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async broadcast(self, message: dict):
+        for connection in self.active_connections:
+            await connection.send_json(message)
+
+manager = ConnectionManager()
 
 # ── Templates / static ────────────────────────────────────────────────
 BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
@@ -65,7 +85,7 @@ async def handle_upload(file: UploadFile = File(...)):
     content = await file.read()
 
     # ── 1. Entropy Core: compute per-window Shannon entropy ──────────
-    patterns, entropy = processor.find_patterns(content)
+    patterns, entropy, scripts = processor.find_patterns(content)
     if isinstance(entropy, float):
         entropy = [entropy]
 
@@ -76,6 +96,7 @@ async def handle_upload(file: UploadFile = File(...)):
         byte_data      = content,
         entropy_series = entropy,
         spike_indices  = spike_indices,
+        scripts_series = scripts,
     )
 
     # ── 3. Persist to analysis store ────────────────────────────────
@@ -86,6 +107,11 @@ async def handle_upload(file: UploadFile = File(...)):
     analysis_store["avg_entropy"]     = sum(entropy) / len(entropy) if entropy else 0.0
     analysis_store["last_filename"]   = file.filename
     analysis_store["pruning_report"]  = report
+    
+    # Calculate top scripts for routing summary
+    from collections import Counter
+    script_counts = Counter(scripts)
+    analysis_store["top_scripts"] = [s for s, _ in script_counts.most_common(3)]
 
     return JSONResponse(content={
         "status":           "success",
@@ -176,13 +202,62 @@ async def analyze_signal():
             content={"error": "No data to analyze."}
         )
     
-    # Combine first 50 high-entropy patches into a hex stream for the AI
+    # Intelligence Routing: Identify the primary script for analysis
+    primary_script = "LATIN_TEXT"
+    if report.signal_patches:
+        # Get the most frequent script in the signal patches
+        from collections import Counter
+        patch_scripts = Counter([p.script_id for p in report.signal_patches])
+        primary_script = patch_scripts.most_common(1)[0][0]
+
+    # Combine first 50 high-entropy patches into a hex stream
     signal_sample = " ".join([p.raw_bytes.hex() for p in report.signal_patches[:50]])
-    analysis_result = bridge.send_signal_to_minimax(signal_sample)
+    
+    # Route to bridge with the script context
+    analysis_result = bridge.send_signal_to_minimax(signal_sample, script_context=primary_script)
     
     return JSONResponse(content={
-        "analysis": analysis_result
+        "analysis": analysis_result,
+        "routed_to": primary_script
     })
+
+
+# ── WebSocket: Real-Time Stream ────────────────────────────────────────
+
+@app.websocket("/ws/stream")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.contract(websocket)
+    try:
+        while True:
+            # Receive raw bytes from a remote source
+            data = await websocket.receive_bytes()
+            
+            # 1. Process in real-time
+            patterns, entropy, scripts = processor.find_patterns(data)
+            spike_indices = processor.last_spike_indices
+            
+            # 2. Anomaly Detection (Cyber-Forensics Layer)
+            # Flag if entropy variance exceeds threshold
+            import numpy as np
+            avg_ent = sum(entropy)/len(entropy) if entropy else 0
+            anomalies = [i for i, e in enumerate(entropy) if abs(e - avg_ent) > 2.5]
+
+            # 3. Broadcast to all monitors
+            payload = {
+                "type": "STREAM_UPDATE",
+                "entropy": entropy,
+                "scripts": scripts,
+                "spikes": spike_indices,
+                "anomalies": anomalies,
+                "avg_entropy": round(avg_ent, 3),
+            }
+            await manager.broadcast(payload)
+
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        print(f"WS Error: {e}")
+        manager.disconnect(websocket)
 
 
 if __name__ == "__main__":

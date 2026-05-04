@@ -73,14 +73,15 @@
 
     <!-- ── AI Signal Intelligence ──────────────────────────────────── -->
     <section class="bg-[#121214] border border-slate-800 p-6 relative overflow-hidden">
-        <div class="absolute top-0 right-0 p-2">
+        <div class="absolute top-0 right-0 p-2 flex gap-2">
+            <span id="ai-route-badge" class="hidden text-[8px] font-mono bg-[#39FF14]/10 text-[#39FF14] px-2 py-0.5 border border-[#39FF14]/30">ROUTED_TO: <span id="routed-val">...</span></span>
             <span class="text-[8px] font-mono text-slate-700">AI_CO-PROCESSOR: MINIMAX-M2</span>
         </div>
         <div class="flex items-center gap-4 mb-4">
             <span class="material-symbols-outlined text-[#39FF14]">psychology</span>
             <h2 class="font-mono text-lg font-bold tracking-tighter uppercase">AI Signal Intelligence</h2>
         </div>
-        <p class="text-xs text-slate-400 mb-6 font-mono">Reconstruct meaning from high-entropy patches using NVIDIA NIM accelerated inference.</p>
+        <p class="text-xs text-slate-400 mb-6 font-mono">Reconstruct meaning from high-entropy patches using Intelligence Routing and NVIDIA NIM.</p>
         
         <div id="ai-output" class="hidden mb-6 bg-black/60 border border-slate-800 p-4 font-mono text-xs text-[#39FF14] leading-relaxed max-h-60 overflow-y-auto custom-scrollbar">
             <!-- AI result injected here -->
@@ -92,37 +93,38 @@
         </button>
         <div id="ai-loading" class="hidden flex items-center gap-3">
             <div class="animate-spin h-4 w-4 border-2 border-[#39FF14] border-t-transparent rounded-full"></div>
-            <span class="font-mono text-xs text-[#39FF14] animate-pulse">PROCESSING SIGNAL...</span>
+            <span class="font-mono text-xs text-[#39FF14] animate-pulse">ROUTING SIGNAL TO OPTIMIZED MODEL...</span>
         </div>
     </section>
     {% endif %}
 
 <section>
 <div class="flex items-center gap-2 mb-4">
-<span class="bg-[#39FF14] text-black font-bold px-2 py-0.5 text-xs">DISCOVERED_PATTERNS</span>
+<span class="bg-[#39FF14] text-black font-bold px-2 py-0.5 text-xs">DISCOVERED_SIGNAL_PATCHES</span>
 <div class="h-[1px] flex-grow bg-slate-800"></div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-{% for pattern in patterns %}
+{% if pruning_report %}
+{% for patch in pruning_report.signal_patches %}
 <div class="bg-[#121214] border border-slate-800 p-4 hover:border-[#39FF14] transition-all group">
 <div class="flex justify-between items-center mb-2">
-<span class="text-[10px] font-mono text-slate-500">ID: {{ loop.index0 }}</span>
-<span class="material-symbols-outlined text-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">content_copy</span>
+<span class="text-[10px] font-mono text-slate-500">OFFSET: {{ patch.byte_offset }}</span>
+<span class="text-[9px] font-mono px-1.5 py-0.5 bg-slate-800 text-[#39FF14] border border-slate-700">{{ patch.script_id }}</span>
 </div>
 <div class="font-mono text-xs text-[#39FF14] break-all bg-black/40 p-2 border border-slate-800">
-{{ pattern }}
+{{ patch.hex_preview }}...
 </div>
 <div class="mt-2 flex justify-between items-center">
-<span class="text-[10px] font-mono text-slate-500">RECURRENCE: HIGH</span>
-<span class="text-[10px] font-mono text-[#39FF14]">MATCH_FOUND</span>
-</div>
-</div>
+<span class="text-[10px] font-mono text-slate-500">ENTROPY: {{ patch.entropy }}</span>
+{% if patch.is_spike %}
+<span class="text-[10px] font-mono text-red-500 font-bold">SPIKE_DETECTED</span>
 {% else %}
-<div class="col-span-full py-20 text-center border border-dashed border-slate-800 bg-[#121214]">
-<span class="material-symbols-outlined text-5xl text-slate-700 mb-4">search_off</span>
-<p class="text-slate-500 font-mono">NO PATTERNS DISCOVERED YET. UPLOAD A FILE TO START ANALYSIS.</p>
+<span class="text-[10px] font-mono text-slate-600">STEADY_SIGNAL</span>
+{% endif %}
+</div>
 </div>
 {% endfor %}
+{% endif %}
 </div>
 </section>
 </main>
@@ -147,10 +149,13 @@
         const btn = document.getElementById('analyze-btn');
         const loader = document.getElementById('ai-loading');
         const output = document.getElementById('ai-output');
+        const routeBadge = document.getElementById('ai-route-badge');
+        const routedVal = document.getElementById('routed-val');
 
         btn.classList.add('hidden');
         loader.classList.remove('hidden');
         output.classList.add('hidden');
+        routeBadge.classList.add('hidden');
 
         try {
             const response = await fetch('/api/analyze', { method: 'POST' });
@@ -158,6 +163,11 @@
             
             output.innerText = data.analysis || data.error;
             output.classList.remove('hidden');
+            
+            if (data.routed_to) {
+                routedVal.innerText = data.routed_to;
+                routeBadge.classList.remove('hidden');
+            }
         } catch (err) {
             output.innerText = "Error contacting AI co-processor.";
             output.classList.remove('hidden');

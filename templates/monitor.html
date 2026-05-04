@@ -298,100 +298,124 @@
     while (container.children.length > 20) container.lastChild.remove();
   }
 
-  // ── Main polling loop ────────────────────────────────────────────
+  // ── WebSocket & Live Streaming ──────────────────────────────────
+  let socket = null;
+  const useWebSocket = true; // Set to true to enable real-time streaming mode
+
+  function initWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/stream`;
+    
+    socket = new WebSocket(wsUrl);
+    
+    socket.onopen = () => {
+      document.getElementById('log-status').innerText = 'LIVE_STREAMING';
+      document.getElementById('log-status').className = 'font-mono text-[10px] text-[#39FF14] animate-pulse';
+      addLog('WebSocket connected. Real-time stream active.', 'INFO');
+    };
+    
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'STREAM_UPDATE') {
+        renderStreamData(data);
+      }
+    };
+    
+    socket.onclose = () => {
+      document.getElementById('log-status').innerText = 'POLLING_MODE';
+      addLog('WebSocket disconnected. Reverting to polling.', 'WARN');
+      setTimeout(initWebSocket, 5000);
+    };
+  }
+
+  function renderStreamData(data) {
+    // Update metric cards
+    document.getElementById('avg-entropy').innerText = data.avg_entropy;
+    document.getElementById('spike-count').innerText = data.spikes ? data.spikes.length : (data.spike_count || 0);
+    
+    const barPct = Math.min(100, (data.avg_entropy / 10) * 100);
+    document.getElementById('entropy-bar').style.width = barPct + '%';
+
+    // Update Graph
+    const pts = data.entropy || [];
+    if (pts.length > 1) {
+      document.getElementById('graph-path').setAttribute('d', buildLinePath(pts));
+      document.getElementById('graph-fill').setAttribute('d', buildFillPath(pts));
+      const avgPts = computeMovingAvg(pts, 8);
+      document.getElementById('avg-path').setAttribute('d', buildLinePath(avgPts));
+    }
+
+    // Render Spike & Anomaly Markers
+    const markersG = document.getElementById('spike-markers');
+    markersG.innerHTML = '';
+    const step = pts.length > 1 ? GRAPH_W / (pts.length - 1) : 0;
+
+    // Spikes (Red)
+    (data.spikes || []).forEach(idx => {
+      const x = (idx * step).toFixed(1);
+      drawMarker(markersG, x, '#ff4040', 'SPIKE');
+    });
+
+    // Anomalies (Purple - Forensics Layer)
+    (data.anomalies || []).forEach(idx => {
+      const x = (idx * step).toFixed(1);
+      drawMarker(markersG, x, '#a855f7', 'ANOMALY');
+    });
+
+    if (data.anomalies && data.anomalies.length > 0) {
+        addLog(`Forensics: ${data.anomalies.length} entropy anomalies detected! Possible payload injection.`, 'ALERT');
+    }
+  }
+
+  function drawMarker(parent, x, color, label) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x); line.setAttribute('x2', x);
+    line.setAttribute('y1', '0'); line.setAttribute('y2', GRAPH_H);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('opacity', '0.6');
+    parent.appendChild(line);
+
+    if (label === 'ANOMALY') {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x); circle.setAttribute('cy', '10');
+        circle.setAttribute('r', '4');
+        circle.setAttribute('fill', color);
+        circle.setAttribute('class', 'animate-pulse');
+        parent.appendChild(circle);
+    }
+  }
+
+  // ── Main polling loop (as fallback) ──────────────────────────────
   let prevSpikeCount = 0;
 
   async function updateStats() {
+    if (socket && socket.readyState === WebSocket.OPEN) return; // Skip if WS is active
+
     try {
       const response = await fetch('/api/stats');
       const data     = await response.json();
-
-      // ── Metric cards ──
-      const avgEl = document.getElementById('avg-entropy');
-      avgEl.innerText = data.avg_entropy;
-      avgEl.classList.add('flash');
-      setTimeout(() => avgEl.classList.remove('flash'), 350);
-
-      document.getElementById('spike-count').innerText = data.spike_count;
-      document.getElementById('badge-window').innerText = data.window_size_bytes  ?? 16;
-      document.getElementById('badge-thresh').innerText = data.spike_threshold_pct ?? 15;
-
-      // Entropy progress bar (avg mapped to 0-100 % where 10 bits = 100 %)
-      const barPct = Math.min(100, (data.avg_entropy / 10) * 100);
-      document.getElementById('entropy-bar').style.width = barPct + '%';
-
-      // ── Graph ──
-      const pts = data.recent_entropy || [];
-      if (pts.length > 1) {
-        const avgPts = computeMovingAvg(pts, 8);
-        document.getElementById('graph-path').setAttribute('d', buildLinePath(pts));
-        document.getElementById('graph-fill').setAttribute('d', buildFillPath(pts));
-        document.getElementById('avg-path').setAttribute('d', buildLinePath(avgPts));
-      }
-
-      // ── Spike markers ──
-      const markersG = document.getElementById('spike-markers');
-      markersG.innerHTML = '';    // clear old markers
-      const spikePositions = data.spike_positions || [];
-      const step = pts.length > 1 ? GRAPH_W / (pts.length - 1) : 0;
-      spikePositions.forEach(idx => {
-        const x = (idx * step).toFixed(1);
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', x); line.setAttribute('x2', x);
-        line.setAttribute('y1', '0'); line.setAttribute('y2', GRAPH_H);
-        line.setAttribute('stroke', '#ff4040');
-        line.setAttribute('stroke-width', '1.5');
-        line.setAttribute('opacity', '0.7');
-        line.setAttribute('stroke-dasharray', '3 3');
-        markersG.appendChild(line);
-
-        // Top triangle marker
-        const tri = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        const tx = parseFloat(x);
-        tri.setAttribute('points', `${tx},2 ${tx-4},10 ${tx+4},10`);
-        tri.setAttribute('fill', '#ff4040');
-        tri.setAttribute('opacity', '0.9');
-        markersG.appendChild(tri);
+      renderStreamData({
+          avg_entropy: data.avg_entropy,
+          entropy: data.recent_entropy,
+          spikes: data.spike_positions,
+          anomalies: [], // Polling doesn't support complex forensics yet
+          pruning: data.pruning
       });
-
-      // ── Pruning Agent panel ──
+      
+      // Additional pruning-specific updates for polling
       const pr = data.pruning || {};
-      const redPct = pr.reduction_pct ?? 0;
-      document.getElementById('pruning-reduction').innerText      = redPct ? redPct.toFixed(1) : '—';
-      document.getElementById('pruning-bar-pruned').style.width   = Math.min(redPct, 100) + '%';
-      document.getElementById('pruning-bytes-pruned').innerText   = pr.pruned_bytes   != null ? pr.pruned_bytes.toLocaleString()   : '—';
-      document.getElementById('pruning-bytes-total').innerText    = pr.original_bytes != null ? pr.original_bytes.toLocaleString() : '—';
-      document.getElementById('pruning-windows-kept').innerText   = pr.retained_windows ?? '—';
-      document.getElementById('pruning-windows-dropped').innerText= pr.pruned_windows   ?? '—';
-      document.getElementById('pruning-cutoff').innerText         = pr.entropy_cutoff   != null ? pr.entropy_cutoff.toFixed(3) : '—';
-      document.getElementById('pruning-target-fill').style.width  = Math.min(redPct, 100) + '%';
-      // Target badge
-      const badge = document.getElementById('pruning-target-badge');
-      if (pr.target_met) {
-        badge.innerText = '✓ TARGET MET (≥60%)';
-        badge.className = 'font-mono text-[10px] px-2 py-0.5 border border-[#39FF14] text-[#39FF14]';
-      } else if (redPct > 0) {
-        badge.innerText = `TARGET: ${redPct.toFixed(1)}% / 60%`;
-        badge.className = 'font-mono text-[10px] px-2 py-0.5 border border-yellow-600 text-yellow-400';
-      }
-
-      // ── Log entries ──
-      const newSpikes = spikePositions.length;
-      if (newSpikes > prevSpikeCount) {
-        addLog(`Dynamic threshold breached — ${newSpikes - prevSpikeCount} new spike(s) detected. Possible script transition (e.g. EN&#x2192;BN).`, 'ALERT');
-      } else if (redPct > 0) {
-        addLog(`Pruning: ${redPct.toFixed(1)}% stripped | ${pr.retained_windows} signal windows kept | cutoff=${(pr.entropy_cutoff||0).toFixed(3)} bits`, pr.target_met ? 'INFO' : 'WARN');
-      } else {
-        addLog(`Batch analysed | avg=${data.avg_entropy} bits/win | spikes=${data.spike_count} | windows=${pts.length}`, 'INFO');
-      }
-      prevSpikeCount = newSpikes;
-
+      document.getElementById('pruning-reduction').innerText      = pr.reduction_pct ? pr.reduction_pct.toFixed(1) : '—';
+      document.getElementById('pruning-bar-pruned').style.width   = Math.min(pr.reduction_pct || 0, 100) + '%';
+      document.getElementById('pruning-cutoff').innerText         = pr.entropy_cutoff != null ? pr.entropy_cutoff.toFixed(3) : '—';
     } catch (err) {
       addLog('Connection error — retrying...', 'WARN');
     }
   }
 
+  initWebSocket();
   setInterval(updateStats, 2000);
   updateStats();
+</script>
 </script>
 </body></html>

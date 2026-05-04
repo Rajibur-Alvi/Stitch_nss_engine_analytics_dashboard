@@ -114,6 +114,44 @@ class NSSProcessor:
 
     # ── Dynamic-threshold spike detector ─────────────────────────────
 
+    # ── Script Identification (Zero-Shot) ───────────────────────────
+
+    def _identify_script(self, window: bytes) -> str:
+        """
+        Identify the likely script/data type of a byte window using 
+        zero-shot statistical byte-range analysis.
+        """
+        if not window: return "EMPTY"
+        
+        # 1. Check for pure ASCII (0-127)
+        if all(b < 128 for b in window):
+            # Further distinguish between text and control/binary
+            printable = sum(1 for b in window if 32 <= b <= 126 or b in (9, 10, 13))
+            if printable / len(window) > 0.8:
+                return "LATIN_TEXT"
+            return "ASCII_CONTROL"
+
+        # 2. Check for UTF-8 Multi-byte sequences
+        # Bengali: U+0980 to U+09FF (Bytes: E0 A6 80 to E0 A7 BF)
+        if any(b == 0xE0 for b in window):
+            indices = [i for i, b in enumerate(window) if b == 0xE0]
+            for idx in indices:
+                if idx + 1 < len(window) and window[idx+1] == 0xA6:
+                    return "BENGALI_UNICODE"
+                if idx + 1 < len(window) and window[idx+1] == 0xA4:
+                    return "DEVANAGARI_UNICODE"
+
+        # 3. Cyrillic: U+0400 to U+04FF (Bytes: D0 80 to D1 BF)
+        if any(b in (0xD0, 0xD1) for b in window):
+            return "CYRILLIC_UNICODE"
+
+        # 4. Fallback: High-entropy binary or Unknown
+        entropy = shannon_entropy(window)
+        if entropy > 7.5:
+            return "ENCRYPTED_OR_COMPRESSED"
+        
+        return "UNKNOWN_SIGNAL"
+
     def _detect_spikes(self, entropy_series: list[float]) -> list[int]:
         """
         Walk the entropy series and flag any window whose value deviates
@@ -168,8 +206,10 @@ class NSSProcessor:
         ───────
         patterns : list of raw byte sequences that repeat predictably
         entropy  : list of per-window entropy values (one per 16 bytes)
+        scripts  : list of identified scripts for each window
         """
         entropy_series = self.analyze_bytes(byte_data)
+        scripts_series = []
 
         # Spike detection
         self.last_spike_indices = self._detect_spikes(entropy_series)
@@ -183,6 +223,8 @@ class NSSProcessor:
             zip(entropy_series, range(0, len(byte_data), ENTROPY_WINDOW_SIZE))
         ):
             window = byte_data[start: start + ENTROPY_WINDOW_SIZE]
+            scripts_series.append(self._identify_script(window))
+            
             if e < static_threshold:
                 current_run.extend(window)
             else:
@@ -193,4 +235,4 @@ class NSSProcessor:
         if len(current_run) > 2:
             patterns.append(bytes(current_run))
 
-        return patterns, entropy_series
+        return patterns, entropy_series, scripts_series

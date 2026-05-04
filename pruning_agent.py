@@ -53,6 +53,7 @@ class SignalPatch:
     raw_bytes:    bytes         # The 16 (or fewer) bytes of this window
     entropy:      float         # Shannon entropy of this patch
     is_spike:     bool          # True if the dynamic threshold flagged it
+    script_id:    str           # Identified script (e.g. LATIN_TEXT, BENGALI_UNICODE)
 
     def to_dict(self) -> dict:
         return {
@@ -60,6 +61,7 @@ class SignalPatch:
             "byte_offset":  self.byte_offset,
             "entropy":      round(self.entropy, 4),
             "is_spike":     self.is_spike,
+            "script_id":    self.script_id,
             "hex_preview":  self.raw_bytes[:8].hex(),          # first 8 bytes as hex
             "size_bytes":   len(self.raw_bytes),
         }
@@ -148,6 +150,7 @@ class PruningAgent:
         byte_data:      bytes,
         entropy_series: list[float],
         spike_indices:  list[int],
+        scripts_series: list[str],
     ) -> PruningReport:
         """
         Run the full pruning pipeline.
@@ -205,6 +208,7 @@ class PruningAgent:
                 raw_bytes    = chunk,
                 entropy      = entropy_series[i],
                 is_spike     = (i in spike_set),
+                script_id    = scripts_series[i],
             ))
 
         original_bytes   = len(byte_data)
