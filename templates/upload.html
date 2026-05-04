@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0A0A0B;
+            background-image: 
+                linear-gradient(to right, #1a1a1c 1px, transparent 1px),
+                linear-gradient(to bottom, #1a1a1c 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .scanline {
+            background: linear-gradient(to bottom, rgba(57, 255, 20, 0.05) 50%, rgba(0, 0, 0, 0) 50%);
+            background-size: 100% 2px;
+            pointer-events: none;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#ffdad6",
+                    "on-surface": "#e3e2e7",
+                    "on-tertiary-container": "#616063",
+                    "surface-bright": "#38393d",
+                    "on-secondary-fixed-variant": "#47464a",
+                    "inverse-on-surface": "#2f3034",
+                    "surface-container": "#1e1f23",
+                    "on-secondary-container": "#b6b4b8",
+                    "on-primary-fixed-variant": "#095300",
+                    "outline-variant": "#3c4b35",
+                    "on-surface-variant": "#baccb0",
+                    "surface-tint": "#2ae500",
+                    "tertiary-fixed-dim": "#c8c6c8",
+                    "surface": "#121317",
+                    "on-primary-container": "#107100",
+                    "on-secondary-fixed": "#1b1b1e",
+                    "on-error": "#690005",
+                    "surface-variant": "#343539",
+                    "on-tertiary-fixed": "#1b1b1d",
+                    "tertiary-fixed": "#e4e2e4",
+                    "secondary-fixed-dim": "#c8c6c9",
+                    "primary": "#efffe3",
+                    "surface-container-low": "#1a1b1f",
+                    "on-secondary": "#303033",
+                    "surface-container-high": "#292a2e",
+                    "on-primary-fixed": "#022100",
+                    "surface-container-highest": "#343539",
+                    "primary-fixed": "#79ff5b",
+                    "background": "#121317",
+                    "secondary": "#c8c6c9",
+                    "tertiary": "#fcf9fb",
+                    "on-primary": "#053900",
+                    "outline": "#85967c",
+                    "surface-container-lowest": "#0d0e12",
+                    "inverse-primary": "#106e00",
+                    "primary-container": "#39ff14",
+                    "inverse-surface": "#e3e2e7",
+                    "primary-fixed-dim": "#2ae500",
+                    "tertiary-container": "#dfdcdf",
+                    "on-tertiary": "#303032",
+                    "secondary-container": "#47464a",
+                    "on-tertiary-fixed-variant": "#474649",
+                    "error": "#ffb4ab",
+                    "on-background": "#e3e2e7",
+                    "surface-dim": "#121317",
+                    "secondary-fixed": "#e4e2e5",
+                    "error-container": "#93000a"
+            },
+            "fontFamily": {
+                    "h1": ["Inter"],
+                    "h2": ["Inter"],
+                    "code-md": ["JetBrains Mono"],
+                    "h3": ["Inter"],
+                    "code-lg": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="min-h-screen text-on-surface font-body-md overflow-x-hidden">
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#0A0A0B] border-b border-slate-800 shadow-[0_0_10px_rgba(57,255,20,0.1)]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#39FF14]">terminal</span>
+<h1 class="text-xl font-black text-[#39FF14] animate-pulse font-mono uppercase tracking-tighter">NSS_ENGINE_v1.0</h1>
+</div>
+<div class="flex items-center">
+<button id="status-btn" class="bg-[#39FF14]/10 text-[#39FF14] px-3 py-1 border border-[#39FF14]/30 font-mono text-xs tracking-tighter uppercase transition-all">
+<span id="status-dot" class="inline-block w-2 h-2 bg-[#39FF14] rounded-full mr-2"></span>
+<span id="status-text">SYSTEM: READY</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-md mx-auto min-h-screen">
+<section class="mb-8">
+<div class="flex items-center gap-2 mb-4">
+<span class="bg-[#39FF14] text-black font-label-caps px-2 py-0.5">INGEST_HUB</span>
+<div class="h-[1px] flex-grow bg-slate-800"></div>
+</div>
+<div onclick="uploadFile()" class="relative border-2 border-dashed border-[#39FF14] bg-[#121214] p-8 flex flex-col items-center justify-center text-center group cursor-pointer transition-all hover:bg-[#39FF14]/5">
+<div class="absolute inset-0 scanline opacity-20"></div>
+<span class="material-symbols-outlined text-5xl text-[#39FF14] mb-4">upload_file</span>
+<h2 class="font-code-lg text-[#39FF14] mb-2 uppercase tracking-widest">DRAG &amp; DROP RAW DATA</h2>
+<p class="font-label-caps text-slate-500 mb-6">SUPPORTED: RAW BYTES, NO DICTIONARY REQ.</p>
+<button class="bg-[#39FF14] text-black font-label-caps px-6 py-3 border border-[#39FF14] hover:shadow-[0_0_20px_rgba(57,255,20,0.4)] transition-all">
+                    SELECT_LOCAL_SOURCE
+                </button>
+</div>
+</section>
+<section id="processing-section" class="mb-8 hidden">
+<div class="flex items-center gap-2 mb-4">
+<span class="bg-slate-800 text-slate-300 font-label-caps px-2 py-0.5">ACTIVE_STREAMS</span>
+<div class="h-[1px] flex-grow bg-slate-800"></div>
+</div>
+<div class="bg-[#121214] border border-slate-800 p-4 relative">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span id="filename-display" class="font-code-md text-[#39FF14]">filename.db</span>
+<span class="font-label-caps text-[10px] text-slate-500">QUANTIZATION: ENABLED</span>
+</div>
+<span id="progress-percent" class="font-code-md text-[#39FF14]">0%</span>
+</div>
+<div class="flex gap-1 h-2 w-full">
+<div id="prog-1" class="flex-grow bg-slate-800"></div>
+<div id="prog-2" class="flex-grow bg-slate-800"></div>
+<div id="prog-3" class="flex-grow bg-slate-800"></div>
+<div id="prog-4" class="flex-grow bg-slate-800"></div>
+<div id="prog-5" class="flex-grow bg-slate-800"></div>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 bg-black border-t border-slate-800">
+<button onclick="window.location.href='/'" class="flex flex-col items-center justify-center bg-[#39FF14] text-black font-bold h-full w-1/3">
+<span class="material-symbols-outlined">upload_file</span>
+<span class="font-mono text-[10px] tracking-widest uppercase mt-1">UPLOAD</span>
+</button>
+<button onclick="window.location.href='/monitor'" class="flex flex-col items-center justify-center text-slate-500 h-full w-1/3 hover:text-[#39FF14]">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-mono text-[10px] tracking-widest uppercase mt-1">MONITOR</span>
+</button>
+<button onclick="window.location.href='/results'" class="flex flex-col items-center justify-center text-slate-500 h-full w-1/3 hover:text-[#39FF14]">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-mono text-[10px] tracking-widest uppercase mt-1">RESULTS</span>
+</button>
+</nav>
+<script>
+    async function uploadFile() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            document.getElementById('processing-section').classList.remove('hidden');
+            document.getElementById('filename-display').innerText = file.name;
+            document.getElementById('status-text').innerText = 'SYSTEM: PROCESSING...';
+            document.getElementById('status-dot').className = 'inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2';
+
+            try {
+                // Simulate progress
+                for(let i=1; i<=5; i++) {
+                    await new Promise(r => setTimeout(r, 200));
+                    document.getElementById(`prog-${i}`).className = 'flex-grow bg-[#39FF14]';
+                    document.getElementById('progress-percent').innerText = (i*20) + '%';
+                }
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                document.getElementById('status-text').innerText = 'SYSTEM: COMPLETE';
+                document.getElementById('status-dot').className = 'inline-block w-2 h-2 bg-[#39FF14] rounded-full mr-2';
+                
+                setTimeout(() => window.location.href = '/monitor', 1000);
+            } catch (err) {
+                document.getElementById('status-text').innerText = 'SYSTEM: ERROR';
+                document.getElementById('status-dot').className = 'inline-block w-2 h-2 bg-red-500 rounded-full mr-2';
+            }
+        };
+        input.click();
+    }
+</script>
+</body></html>

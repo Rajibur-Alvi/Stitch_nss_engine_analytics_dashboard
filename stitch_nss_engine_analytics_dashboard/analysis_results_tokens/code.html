@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NSS Engine | Efficiency Results</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .grid-pattern {
+            background-image: radial-gradient(circle, #334155 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(10, 10, 11, 0.5) 50%);
+            background-size: 100% 2px;
+        }
+        .cursor-terminal { cursor: crosshair; }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#ffdad6",
+                    "on-surface": "#e3e2e7",
+                    "on-tertiary-container": "#616063",
+                    "surface-bright": "#38393d",
+                    "on-secondary-fixed-variant": "#47464a",
+                    "inverse-on-surface": "#2f3034",
+                    "surface-container": "#1e1f23",
+                    "on-secondary-container": "#b6b4b8",
+                    "on-primary-fixed-variant": "#095300",
+                    "outline-variant": "#3c4b35",
+                    "on-surface-variant": "#baccb0",
+                    "surface-tint": "#2ae500",
+                    "tertiary-fixed-dim": "#c8c6c8",
+                    "surface": "#121317",
+                    "on-primary-container": "#107100",
+                    "on-secondary-fixed": "#1b1b1e",
+                    "on-error": "#690005",
+                    "surface-variant": "#343539",
+                    "on-tertiary-fixed": "#1b1b1d",
+                    "tertiary-fixed": "#e4e2e4",
+                    "secondary-fixed-dim": "#c8c6c9",
+                    "primary": "#efffe3",
+                    "surface-container-low": "#1a1b1f",
+                    "on-secondary": "#303033",
+                    "surface-container-high": "#292a2e",
+                    "on-primary-fixed": "#022100",
+                    "surface-container-highest": "#343539",
+                    "primary-fixed": "#79ff5b",
+                    "background": "#121317",
+                    "secondary": "#c8c6c9",
+                    "tertiary": "#fcf9fb",
+                    "on-primary": "#053900",
+                    "outline": "#85967c",
+                    "surface-container-lowest": "#0d0e12",
+                    "inverse-primary": "#106e00",
+                    "primary-container": "#39ff14",
+                    "inverse-surface": "#e3e2e7",
+                    "primary-fixed-dim": "#2ae500",
+                    "tertiary-container": "#dfdcdf",
+                    "on-tertiary": "#303032",
+                    "secondary-container": "#47464a",
+                    "on-tertiary-fixed-variant": "#474649",
+                    "error": "#ffb4ab",
+                    "on-background": "#e3e2e7",
+                    "surface-dim": "#121317",
+                    "secondary-fixed": "#e4e2e5",
+                    "error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "8px",
+                    "base": "4px",
+                    "sm": "16px",
+                    "xl": "64px",
+                    "md": "24px",
+                    "lg": "40px",
+                    "gutter": "1px"
+            },
+            "fontFamily": {
+                    "h1": ["Inter"],
+                    "h2": ["Inter"],
+                    "code-md": ["JetBrains Mono"],
+                    "h3": ["Inter"],
+                    "code-lg": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "h1": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "h2": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "code-md": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                    "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "code-lg": ["16px", {"lineHeight": "1.5", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#0A0A0B] text-on-surface font-body-md selection:bg-primary-container selection:text-black">
+<div class="fixed inset-0 grid-pattern opacity-20 pointer-events-none z-0"></div>
+<div class="fixed inset-0 scanline opacity-5 pointer-events-none z-10"></div>
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 bg-[#0A0A0B] border-b border-slate-800 flex justify-between items-center w-full px-6 py-4 shadow-[0_0_10px_rgba(57,255,20,0.1)]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="terminal">terminal</span>
+<h1 class="text-xl font-black text-[#39FF14] animate-pulse font-mono uppercase tracking-tighter">NSS_ENGINE_v1.0</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex gap-6">
+<span class="text-slate-500 font-mono text-xs uppercase tracking-widest cursor-terminal hover:text-[#39FF14] transition-colors">DE-ENTROPY</span>
+<span class="text-slate-500 font-mono text-xs uppercase tracking-widest cursor-terminal hover:text-[#39FF14] transition-colors">ARCHIVE</span>
+<span class="text-[#39FF14] border-b-2 border-[#39FF14] font-mono text-xs uppercase tracking-widest cursor-terminal">RESULTS</span>
+</div>
+<div class="bg-[#39FF14]/10 px-3 py-1 border border-[#39FF14]/30">
+<span class="text-[#39FF14] font-mono text-[10px] font-bold">SYSTEM: READY</span>
+</div>
+</div>
+</header>
+<main class="relative z-20 container mx-auto px-6 py-8 mb-24">
+<!-- Header Section -->
+<div class="mb-10">
+<div class="text-[#39FF14] font-label-caps mb-2">[ DATA_OUTPUT_SUCCESS ]</div>
+<h2 class="font-h1 text-h1 text-on-surface">Efficiency Analysis</h2>
+<div class="h-1 w-24 bg-[#39FF14] mt-4"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter bg-slate-800 border border-slate-800">
+<!-- Comparison Bento Item -->
+<div class="md:col-span-8 bg-[#121214] p-8 flex flex-col justify-between">
+<div>
+<div class="font-label-caps text-slate-500 mb-6">COMPARATIVE_LOAD_BALANCING</div>
+<div class="flex flex-col gap-8">
+<div class="flex items-end justify-between border-l-2 border-slate-700 pl-6 py-2">
+<div>
+<span class="block text-slate-400 font-mono text-xs mb-1">STANDARD LLM</span>
+<span class="font-h2 text-h2 text-slate-300">104,200 <span class="text-sm text-slate-500">TOKENS</span></span>
+</div>
+<div class="w-full max-w-xs bg-slate-800 h-2 mb-3 ml-8 overflow-hidden">
+<div class="bg-slate-500 h-full w-[90%]"></div>
+</div>
+</div>
+<div class="flex items-end justify-between border-l-2 border-[#39FF14] pl-6 py-2 bg-[#39FF14]/5">
+<div>
+<span class="block text-[#39FF14] font-mono text-xs mb-1">NSS ENGINE</span>
+<span class="font-h2 text-h2 text-[#39FF14]">62,200 <span class="text-sm text-[#39FF14]/60">TOKENS</span></span>
+</div>
+<div class="w-full max-w-xs bg-slate-800 h-2 mb-3 ml-8 overflow-hidden">
+<div class="bg-[#39FF14] h-full w-[45%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-12 grid grid-cols-2 gap-8">
+<div class="border border-slate-800 p-4">
+<span class="block text-slate-500 font-label-caps mb-2">LATENCY_REDUCTION</span>
+<span class="text-h3 font-h3 text-on-surface">-320ms</span>
+</div>
+<div class="border border-slate-800 p-4">
+<span class="block text-slate-500 font-label-caps mb-2">MEMORY_FOOTPRINT</span>
+<span class="text-h3 font-h3 text-on-surface">14.2 MB</span>
+</div>
+</div>
+</div>
+<!-- Big Stat Circular Progress -->
+<div class="md:col-span-4 bg-[#121214] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+<img class="w-full h-full object-cover" data-alt="A complex 3D wireframe mesh of a sphere rendered in glowing neon green against a pitch black background. The geometric lines intersect at precise mathematical nodes, creating a high-tech blueprint aesthetic. Subtle digital artifacts and data points float around the sphere, suggesting a high-performance compute environment. The lighting is focused and intense, casting a technical glow over the entire composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChCPfLtC1aB5957Lw80-c8qk0l-IOKqIbiL80Kz3jgkbhoLMup5qtNDg0RKnGKxsyKH2FWmzLwuAKmjWhgL0godkk1oWSWHnqTJUwsqdSBbWxU02UHXwH5uSoLxD-CXbGmzWQ0p_ShDgqyJtnucZ2EHyIG7kutNXSWy2cRoYh0_qQoMDHmUITWlVStXWOZow74gI6FjdfUVD1O63WDbbhMStQxqPg6MLyuEjb5taebm16qB80CYfCIuR6DbqjK-hY3mPFGgOnLMSHo"/>
+</div>
+<div class="relative z-10">
+<div class="font-label-caps text-slate-500 mb-8">COMPRESSION_EFFICIENCY</div>
+<div class="relative inline-flex items-center justify-center p-4">
+<svg class="w-48 h-48 transform -rotate-90">
+<circle class="text-slate-800" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="2"></circle>
+<circle class="text-[#39FF14]" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502.6" stroke-dashoffset="125" stroke-width="8" style="stroke-dasharray: 502.6; stroke-dashoffset: 150;"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="text-5xl font-black text-[#39FF14] font-mono">71%</span>
+<span class="text-[10px] text-slate-500 font-label-caps">GAIN_RATIO</span>
+</div>
+</div>
+<div class="mt-8 text-on-surface font-body-md px-4">
+                        System successfully eliminated redundant semantic entropy across 12 high-density layers.
+                    </div>
+</div>
+</div>
+<!-- Token Saved Card -->
+<div class="md:col-span-6 bg-[#121214] p-8 border-t border-slate-800">
+<div class="flex items-start justify-between">
+<div>
+<div class="font-label-caps text-slate-500 mb-1">TOKENS_SAVED</div>
+<div class="text-[64px] font-black text-[#39FF14] font-mono leading-none tracking-tighter">42,000</div>
+</div>
+<span class="material-symbols-outlined text-[#39FF14] text-4xl" data-icon="savings">savings</span>
+</div>
+<div class="mt-6 flex gap-2">
+<div class="h-1 flex-1 bg-[#39FF14]"></div>
+<div class="h-1 flex-1 bg-[#39FF14]"></div>
+<div class="h-1 flex-1 bg-[#39FF14]"></div>
+<div class="h-1 flex-1 bg-[#39FF14]"></div>
+<div class="h-1 flex-1 bg-slate-800"></div>
+<div class="h-1 flex-1 bg-slate-800"></div>
+</div>
+</div>
+<!-- Cost Reduction Card -->
+<div class="md:col-span-6 bg-[#121214] p-8 border-t border-l border-slate-800">
+<div class="flex items-start justify-between">
+<div>
+<div class="font-label-caps text-slate-500 mb-1">COST_REDUCTION</div>
+<div class="text-[64px] font-black text-on-surface font-mono leading-none tracking-tighter">
+<span class="text-[#39FF14]">$</span>1,240.50
+                        </div>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-4xl" data-icon="payments">payments</span>
+</div>
+<div class="mt-6 text-slate-400 font-mono text-xs">
+                    ESTIMATED_MONTHLY_SAVINGS_AT_CURRENT_VOLUME
+                </div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="mt-12 flex flex-col md:flex-row items-center justify-between gap-8 border-t border-slate-800 pt-8">
+<div class="max-w-md">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-2 h-2 rounded-full bg-[#39FF14] animate-ping"></div>
+<span class="text-xs font-mono text-[#39FF14]">BATCH_READY_FOR_PROCESSING</span>
+</div>
+<p class="text-slate-500 text-sm">
+                    Sequence optimization completed. System overhead minimized. Ready to de-entropize the next data stream according to NSS parameters.
+                </p>
+</div>
+<button class="w-full md:w-auto bg-[#39FF14] text-black font-mono font-bold py-5 px-12 text-lg hover:shadow-[0_0_20px_rgba(57,255,20,0.6)] active:scale-95 transition-all cursor-terminal uppercase tracking-widest">
+                DE-ENTROPIZE NEW BATCH
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 bg-black border-t border-slate-800">
+<button class="flex flex-col items-center justify-center text-slate-500 p-2 hover:text-[#39FF14] transition-all group">
+<span class="material-symbols-outlined mb-1" data-icon="upload_file">upload_file</span>
+<span class="font-mono text-[10px] tracking-widest">UPLOAD</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-500 p-2 hover:text-[#39FF14] transition-all group">
+<span class="material-symbols-outlined mb-1" data-icon="monitoring">monitoring</span>
+<span class="font-mono text-[10px] tracking-widest">MONITOR</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-[#39FF14] text-black font-bold p-2 scale-105 h-full px-8 transition-all">
+<span class="material-symbols-outlined mb-1" data-icon="insights">insights</span>
+<span class="font-mono text-[10px] tracking-widest">RESULTS</span>
+</button>
+</nav>
+<!-- Terminal Background Element -->
+<div class="fixed bottom-20 right-6 z-10 hidden xl:block">
+<div class="bg-[#0A0A0B] border border-slate-800 p-4 w-64 shadow-2xl">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-mono text-slate-500">LIVE_METRIC_FEED</span>
+<div class="w-2 h-2 rounded-full bg-red-500/50"></div>
+</div>
+<div class="font-mono text-[10px] text-[#39FF14] space-y-1">
+<div class="opacity-100">PRC &gt;&gt; INIT_RESULTS_UI</div>
+<div class="opacity-80">DAT &gt;&gt; FETCHING_METRICS...</div>
+<div class="opacity-60">SRV &gt;&gt; PKT_RECV: 104KB</div>
+<div class="opacity-40">SYS &gt;&gt; RENDER_COMPLETE</div>
+<div class="opacity-20 animate-pulse">_</div>
+</div>
+</div>
+</div>
+</body></html>

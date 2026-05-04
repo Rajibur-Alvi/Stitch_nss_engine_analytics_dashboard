@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0A0A0B;
+            background-image: 
+                linear-gradient(to right, #1e293b 1px, transparent 1px),
+                linear-gradient(to bottom, #1e293b 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-attachment: fixed;
+            color: #e3e2e7;
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(57, 255, 20, 0.05);
+            position: absolute;
+            z-index: 10;
+        }
+        .graph-line {
+            filter: drop-shadow(0 0 8px #39FF14);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0A0A0B;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #39FF14;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#ffdad6",
+                        "on-surface": "#e3e2e7",
+                        "on-tertiary-container": "#616063",
+                        "surface-bright": "#38393d",
+                        "on-secondary-fixed-variant": "#47464a",
+                        "inverse-on-surface": "#2f3034",
+                        "surface-container": "#1e1f23",
+                        "on-secondary-container": "#b6b4b8",
+                        "on-primary-fixed-variant": "#095300",
+                        "outline-variant": "#3c4b35",
+                        "on-surface-variant": "#baccb0",
+                        "surface-tint": "#2ae500",
+                        "tertiary-fixed-dim": "#c8c6c8",
+                        "surface": "#121317",
+                        "on-primary-container": "#107100",
+                        "on-secondary-fixed": "#1b1b1e",
+                        "on-error": "#690005",
+                        "surface-variant": "#343539",
+                        "on-tertiary-fixed": "#1b1b1d",
+                        "tertiary-fixed": "#e4e2e4",
+                        "secondary-fixed-dim": "#c8c6c9",
+                        "primary": "#efffe3",
+                        "surface-container-low": "#1a1b1f",
+                        "on-secondary": "#303033",
+                        "surface-container-high": "#292a2e",
+                        "on-primary-fixed": "#022100",
+                        "surface-container-highest": "#343539",
+                        "primary-fixed": "#79ff5b",
+                        "background": "#121317",
+                        "secondary": "#c8c6c9",
+                        "tertiary": "#fcf9fb",
+                        "on-primary": "#053900",
+                        "outline": "#85967c",
+                        "surface-container-lowest": "#0d0e12",
+                        "inverse-primary": "#106e00",
+                        "primary-container": "#39ff14",
+                        "inverse-surface": "#e3e2e7",
+                        "primary-fixed-dim": "#2ae500",
+                        "tertiary-container": "#dfdcdf",
+                        "on-tertiary": "#303032",
+                        "secondary-container": "#47464a",
+                        "on-tertiary-fixed-variant": "#474649",
+                        "error": "#ffb4ab",
+                        "on-background": "#e3e2e7",
+                        "surface-dim": "#121317",
+                        "secondary-fixed": "#e4e2e5",
+                        "error-container": "#93000a"
+                    },
+                    "fontFamily": {
+                        "h1": ["Inter"],
+                        "h2": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "h3": ["Inter"],
+                        "code-lg": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "h1": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "h2": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "code-md": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "code-lg": ["16px", {"lineHeight": "1.5", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface bg-[#0A0A0B] min-h-screen flex flex-col overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="bg-[#0A0A0B] dark:bg-[#0A0A0B] text-[#39FF14] dark:text-[#39FF14] font-mono uppercase tracking-tighter docked full-width top-0 border-b border-slate-800 flat shadow-[0_0_10px_rgba(57,255,20,0.1)] flex justify-between items-center w-full px-6 py-4 z-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-xl" data-icon="terminal">terminal</span>
+<h1 class="text-xl font-black text-[#39FF14] animate-pulse">NSS_ENGINE_v1.0</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8 font-label-caps text-xs">
+<a class="text-slate-500 hover:text-[#39FF14] transition-all" href="#">UPLOAD</a>
+<a class="text-[#39FF14] border-b-2 border-[#39FF14] pb-1" href="#">MONITOR</a>
+<a class="text-slate-500 hover:text-[#39FF14] transition-all" href="#">RESULTS</a>
+</nav>
+<div class="flex items-center gap-2 px-3 py-1 bg-[#39FF14]/10 border border-[#39FF14]/30">
+<span class="w-2 h-2 bg-[#39FF14] rounded-full animate-ping"></span>
+<span class="text-[10px] font-bold">SYSTEM: READY</span>
+</div>
+</div>
+</header>
+<main class="flex-grow p-4 md:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full relative">
+<!-- Dashboard Layout: Bento Style -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<!-- Readout Panel: Average Entropy -->
+<div class="md:col-span-1 bg-[#121214] border border-slate-800 p-4 flex flex-col justify-between">
+<div>
+<span class="font-label-caps text-slate-500 block mb-1">METRIC_01</span>
+<h3 class="font-h3 text-on-surface uppercase leading-none">Avg Entropy</h3>
+</div>
+<div class="py-6">
+<span class="text-5xl font-code-lg text-[#39FF14] tracking-tighter">7.942</span>
+<span class="text-xs font-label-caps text-slate-500 block mt-1">BITS / TOKEN</span>
+</div>
+<div class="h-1 bg-slate-800 w-full">
+<div class="h-full bg-[#39FF14] w-[79%]"></div>
+</div>
+</div>
+<!-- Readout Panel: Active Nodes -->
+<div class="md:col-span-1 bg-[#121214] border border-slate-800 p-4 flex flex-col justify-between">
+<div>
+<span class="font-label-caps text-slate-500 block mb-1">METRIC_02</span>
+<h3 class="font-h3 text-on-surface uppercase leading-none">Spike Count</h3>
+</div>
+<div class="py-6">
+<span class="text-5xl font-code-lg text-primary-container tracking-tighter">14</span>
+<span class="text-xs font-label-caps text-slate-500 block mt-1">LAST 60s</span>
+</div>
+<div class="flex gap-1 h-1">
+<div class="flex-grow bg-[#39FF14]"></div>
+<div class="flex-grow bg-[#39FF14]"></div>
+<div class="flex-grow bg-slate-800"></div>
+<div class="flex-grow bg-slate-800"></div>
+<div class="flex-grow bg-slate-800"></div>
+</div>
+</div>
+<!-- Graph Canvas: Entropy Monitoring -->
+<div class="md:col-span-4 lg:col-span-4 bg-[#121214] border border-slate-800 relative overflow-hidden h-[400px]">
+<div class="absolute top-0 left-0 w-full p-4 flex justify-between items-start z-20 pointer-events-none">
+<div>
+<span class="font-label-caps text-slate-500">LIVE_DATA_STREAM</span>
+<h2 class="font-h2 text-[#39FF14] uppercase tracking-tighter">Entropy Spikes</h2>
+</div>
+<div class="flex gap-4">
+<div class="text-right">
+<span class="font-label-caps text-slate-500 block">Y_AXIS</span>
+<span class="font-code-md text-xs">BITS/TOKEN</span>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-slate-500 block">X_AXIS</span>
+<span class="font-code-md text-xs">TIME (T+)</span>
+</div>
+</div>
+</div>
+<!-- SVG Graph -->
+<div class="absolute inset-0 flex items-end px-4 pb-8">
+<svg class="w-full h-3/4 opacity-90" preserveaspectratio="none" viewbox="0 0 1000 300">
+<defs>
+<lineargradient id="gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#39FF14;stop-opacity:0.2"></stop>
+<stop offset="100%" style="stop-color:#39FF14;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Lines -->
+<line stroke="#1e293b" stroke-dasharray="4" x1="0" x2="1000" y1="50" y2="50"></line>
+<line stroke="#1e293b" stroke-dasharray="4" x1="0" x2="1000" y1="150" y2="150"></line>
+<line stroke="#1e293b" stroke-dasharray="4" x1="0" x2="1000" y1="250" y2="250"></line>
+<!-- Area Fill -->
+<path d="M0,300 L0,220 L50,210 L100,240 L150,120 L200,200 L250,50 L300,180 L350,230 L400,210 L450,100 L500,250 L550,220 L600,40 L650,240 L700,210 L750,190 L800,80 L850,220 L900,240 L950,230 L1000,200 L1000,300 Z" fill="url(#gradient)"></path>
+<!-- Main Stroke -->
+<path class="graph-line" d="M0,220 L50,210 L100,240 L150,120 L200,200 L250,50 L300,180 L350,230 L400,210 L450,100 L500,250 L550,220 L600,40 L650,240 L700,210 L750,190 L800,80 L850,220 L900,240 L950,230 L1000,200" fill="none" stroke="#39FF14" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+<!-- Real-time Logs Section -->
+<div class="md:col-span-4 bg-[#121214] border border-slate-800 flex flex-col h-[200px]">
+<div class="border-b border-slate-800 px-4 py-2 flex justify-between items-center bg-[#1A1A1C]">
+<span class="font-label-caps text-slate-500">EVENT_LOG_CONSOLES</span>
+<div class="flex gap-2">
+<div class="w-2 h-2 bg-red-500 rounded-full"></div>
+<div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+<div class="w-2 h-2 bg-[#39FF14] rounded-full"></div>
+</div>
+</div>
+<div class="flex-grow overflow-y-auto p-4 font-code-md text-xs text-slate-400 space-y-1 custom-scrollbar">
+<p><span class="text-slate-600">[14:02:11]</span> <span class="text-[#39FF14]">INFO:</span> Initializing entropy stream processor...</p>
+<p><span class="text-slate-600">[14:02:14]</span> <span class="text-[#39FF14]">INFO:</span> Connection established at 10.0.4.12:9000</p>
+<p><span class="text-slate-600">[14:02:15]</span> <span class="text-yellow-500">WARN:</span> Minor variance detected in chunk 0xFA1</p>
+<p><span class="text-slate-600">[14:02:18]</span> <span class="text-[#39FF14]">INFO:</span> Analyzing chunk 0xFA2... Stability: 99.4%</p>
+<p><span class="text-slate-600">[14:02:22]</span> <span class="text-red-500 font-bold">ALERT:</span> Analyzing chunk 0xFA3... Spike detected [8.22 bits/token]</p>
+<p><span class="text-slate-600">[14:02:23]</span> <span class="text-[#39FF14]">INFO:</span> Auto-correcting buffer variance...</p>
+<p><span class="text-slate-600">[14:02:28]</span> <span class="text-[#39FF14]">INFO:</span> Analyzing chunk 0xFA4... Stability: 98.1%</p>
+<p><span class="text-slate-600">[14:02:30]</span> <span class="text-red-500 font-bold">ALERT:</span> Analyzing chunk 0xFA5... Critical entropy threshold breached</p>
+<p><span class="text-slate-600">[14:02:32]</span> <span class="text-[#39FF14]">INFO:</span> Re-balancing entropy distribution nodes...</p>
+<p><span class="text-slate-600">[14:02:35]</span> <span class="text-[#39FF14]">INFO:</span> Analyzing chunk 0xFA6... Spike detected [7.91 bits/token]</p>
+<p><span class="text-slate-600">[14:02:40]</span> <span class="text-slate-500">_SYSTEM_IDLE: Waiting for next data burst...</span></p>
+</div>
+</div>
+<!-- Visualization Card 1 -->
+<div class="md:col-span-2 border border-slate-800 bg-[#121214] group overflow-hidden">
+<div class="font-label-caps bg-slate-800/30 text-slate-500 px-3 py-1 border-b border-slate-800">DISTRIBUTION_MAP</div>
+<div class="p-6 flex items-center justify-center bg-black/40 h-[180px]">
+<img class="max-h-full object-contain opacity-70 group-hover:opacity-100 transition-opacity" data-alt="A sophisticated data visualization showing a 3D scatter plot of entropy points glowing in bright neon green against a pitch-black background. The points form a dense cluster with sharp, geometric lines connecting outliers. The visual style is highly technical, using a monochrome dark palette with high-frequency green accents, mimicking a high-performance developer terminal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACLzx0arqo6DaJSCIrCyJhZBAAG4qefM6YHtVcI6wqWsf6db-KTScSYU3u4JFo5QeMyL2HtQakL864lN511U-pbI9Cp4x8XUnK-c0Rqohij9XkhudEdjcB8yQctE0MheQ2IETJLp0UOW4juaRngOGV6s6z7P3tTqC9pVsEsu4_2QCa1H_f5SEyrzwDJDy4VJn1etR69bZ2Xrd6hDSVa06CXO3oDpmVJH8ISooJB2UcxIJ4gakiveVG1CPVu4CQJ9CSyELhd0YBO7az"/>
+</div>
+</div>
+<!-- Visualization Card 2 -->
+<div class="md:col-span-2 border border-slate-800 bg-[#121214] group overflow-hidden">
+<div class="font-label-caps bg-slate-800/30 text-slate-500 px-3 py-1 border-b border-slate-800">NODE_TOPOLOGY</div>
+<div class="p-6 flex items-center justify-center bg-black/40 h-[180px]">
+<img class="max-h-full object-contain opacity-70 group-hover:opacity-100 transition-opacity" data-alt="A minimalist network topology map with small, glowing square nodes connected by thin, sharp vectors. The entire structure is tinted in deep obsidian and vibrant emerald green. Each node pulses slightly, suggesting active data transmission. The aesthetic is futuristic and authoritative, designed for a high-level system monitoring dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA77tltX8f5ACokzeM38igsWzkXsMnUWmO-eBozoIalhvRYYRewGElrdj4cRbWeJ8zdtiIW1vwRZYW65fQ7fk1oOC8wWXo49pqjF7rifuBkjnOUEp2o673sfuINEE7JIK0wi2Eue0roT-JjwTdhfUPaK6QLPJFjp5i69gM1vFFU3sptCw0vQXq6eUeBDlha4j5r0Hy4ZVRHsKk6y0jMmdUKdO_LHc4cc0cL5aG2leSvVSkpDh3juDC8tvc4oynwCrB652I8XTxpRFDQ"/>
+</div>
+</div>
+</div>
+</main>
+<!-- Space for BottomNavBar -->
+<div class="h-20"></div>
+<!-- BottomNavBar -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 bg-black border-t border-slate-800">
+<button class="flex flex-col items-center justify-center text-slate-500 p-2 hover:shadow-[0_0_15px_rgba(57,255,20,0.4)] hover:text-[#39FF14] transition-all duration-75 ease-in-out">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+<span class="font-mono text-[10px] tracking-widest mt-1">UPLOAD</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-[#39FF14] text-black font-bold p-2 scale-105 transition-all duration-75 ease-in-out">
+<span class="material-symbols-outlined" data-icon="monitoring" data-weight="fill" style="font-variation-settings: 'FILL' 1;">monitoring</span>
+<span class="font-mono text-[10px] tracking-widest mt-1">MONITOR</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-500 p-2 hover:shadow-[0_0_15px_rgba(57,255,20,0.4)] hover:text-[#39FF14] transition-all duration-75 ease-in-out">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-mono text-[10px] tracking-widest mt-1">RESULTS</span>
+</button>
+</footer>
+</body></html>

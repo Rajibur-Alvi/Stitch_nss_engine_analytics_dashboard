@@ -1,0 +1,23 @@
+@echo off
+set PYTHON=%LOCALAPPDATA%\Programs\Python\Python311\python.exe
+if not exist "%PYTHON%" set PYTHON=python
+
+echo.
+echo  ███╗   ██╗███████╗███████╗    ███████╗███╗   ██╗ ██████╗ ██╗███╗   ██╗███████╗
+echo  ████╗  ██║██╔════╝██╔════╝    ██╔════╝████╗  ██║██╔════╝ ██║████╗  ██║██╔════╝
+echo  ██╔██╗ ██║███████╗███████╗    █████╗  ██╔██╗ ██║██║  ███╗██║██╔██╗ ██║█████╗
+echo  ██║╚██╗██║╚════██║╚════██║    ██╔══╝  ██║╚██╗██║██║   ██║██║██║╚██╗██║██╔══╝
+echo  ██║ ╚████║███████║███████║    ███████╗██║ ╚████║╚██████╔╝██║██║ ╚████║███████╗
+echo  ╚═╝  ╚═══╝╚══════╝╚══════╝    ╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝
+echo.
+echo  [CONFIG] Window Size : 16 bytes
+echo  [CONFIG] Spike Threshold : +/-15%% of moving average
+echo  [CONFIG] Quantization : Dynamic INT8 (PyTorch)
+echo.
+
+echo [*] Starting NSS Engine Dashboard...
+"%PYTHON%" main.py
+
+echo.
+echo [!] Server stopped.
+pause
