@@ -27,6 +27,7 @@ analysis_store: dict = {
     "pruning_report":   None,   # PruningReport | None
     "top_scripts":      [],
     "active_stream":    False,
+    "security_profile": {"profile": "N/A", "risk": "N/A"},
 }
 
 # ── WebSocket Manager ────────────────────────────────────────────────
@@ -73,8 +74,9 @@ async def monitor_page(request: Request):
 async def results_page(request: Request):
     report = analysis_store["pruning_report"]
     return templates.TemplateResponse(request, "results.html", {
-        "patterns":       analysis_store["patterns_found"],
-        "pruning_report": report.to_dict() if report else None,
+        "patterns":         analysis_store["patterns_found"],
+        "pruning_report":   report.to_dict() if report else None,
+        "security_profile": analysis_store["security_profile"],
     })
 
 
@@ -112,6 +114,9 @@ async def handle_upload(file: UploadFile = File(...)):
     from collections import Counter
     script_counts = Counter(scripts)
     analysis_store["top_scripts"] = [s for s, _ in script_counts.most_common(3)]
+    
+    # ── 4. Neural Security Profiling ───────────────────────────────
+    analysis_store["security_profile"] = processor.get_security_profile(entropy, scripts)
 
     return JSONResponse(content={
         "status":           "success",
@@ -171,6 +176,7 @@ async def get_stats():
         "window_size_bytes":   16,
         "spike_threshold_pct": 15,
         "pruning":             pruning_stats,
+        "security":            analysis_store["security_profile"],
     })
 
 

@@ -152,6 +152,36 @@ class NSSProcessor:
         
         return "UNKNOWN_SIGNAL"
 
+    def get_security_profile(self, entropy_series: list[float], scripts: list[str]) -> dict:
+        """
+        Analyze the full signal history and return a Security/Data profile.
+        """
+        if not entropy_series: return {"profile": "NO_DATA", "risk": "N/A"}
+        
+        avg_ent = sum(entropy_series) / len(entropy_series)
+        high_ent_count = sum(1 for e in entropy_series if e > 7.5)
+        transitions = sum(1 for i in range(1, len(scripts)) if scripts[i] != scripts[i-1])
+        
+        profile = "STABLE_LATIN_STREAM"
+        risk = "LOW"
+        
+        if avg_ent > 6.0 and transitions > 5:
+            profile = "MULTILINGUAL_SIGNAL"
+            risk = "LOW"
+        if high_ent_count / len(entropy_series) > 0.3:
+            profile = "SUSPECTED_OBFUSCATION_OR_ENCRYPTION"
+            risk = "MEDIUM"
+        if any(s == "ENCRYPTED_OR_COMPRESSED" for s in scripts) and transitions > 10:
+            profile = "POSSIBLE_PAYLOAD_INJECTION"
+            risk = "HIGH"
+            
+        return {
+            "profile": profile,
+            "risk": risk,
+            "transitions": transitions,
+            "complexity_index": round(avg_ent * (1 + transitions/100), 2)
+        }
+
     def _detect_spikes(self, entropy_series: list[float]) -> list[int]:
         """
         Walk the entropy series and flag any window whose value deviates

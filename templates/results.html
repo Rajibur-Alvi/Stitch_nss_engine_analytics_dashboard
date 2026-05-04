@@ -71,6 +71,48 @@
         </div>
     </section>
 
+    <!-- ── Neural Security Profile ────────────────────────────────── -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2 flex items-center gap-2 mb-2">
+            <span class="bg-[#a855f7] text-white font-bold px-2 py-0.5 text-xs">NEURAL_SECURITY_PROFILE</span>
+            <div class="h-[1px] flex-grow bg-slate-800"></div>
+        </div>
+        
+        <div class="bg-[#121214] border-l-4 border-[#a855f7] p-6 flex items-center gap-6">
+            <div class="bg-[#a855f7]/10 p-4 rounded-full">
+                <span class="material-symbols-outlined text-[#a855f7] text-4xl">security</span>
+            </div>
+            <div>
+                <span class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">SIGNAL_CLASSIFICATION</span>
+                <h3 id="security-profile-name" class="text-xl font-bold text-white uppercase tracking-tighter">
+                    {{ security_profile.profile if security_profile else "ANALYZING..." }}
+                </h3>
+                <div class="flex items-center gap-4 mt-2">
+                    <span class="text-xs font-mono text-slate-400">RISK_LEVEL: 
+                        <span class="{% if security_profile and security_profile.risk == 'HIGH' %}text-red-500{% elif security_profile and security_profile.risk == 'MEDIUM' %}text-yellow-500{% else %}text-[#39FF14]{% endif %} font-bold">
+                            {{ security_profile.risk if security_profile else "N/A" }}
+                        </span>
+                    </span>
+                    <span class="text-xs font-mono text-slate-400">COMPLEXITY: {{ security_profile.complexity_index if security_profile else "0.0" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-[#121214] border border-slate-800 p-6">
+            <span class="text-[10px] font-mono text-slate-500 uppercase block mb-4">THREAT_METRICS</span>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="border-l border-slate-800 pl-3">
+                    <span class="text-[10px] font-mono text-slate-600 block">TRANSITIONS</span>
+                    <span class="text-lg font-mono text-white">{{ security_profile.transitions if security_profile else "0" }}</span>
+                </div>
+                <div class="border-l border-slate-800 pl-3">
+                    <span class="text-[10px] font-mono text-slate-600 block">ENTROPY_PEAK</span>
+                    <span class="text-lg font-mono text-white">8.00</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ── AI Signal Intelligence ──────────────────────────────────── -->
     <section class="bg-[#121214] border border-slate-800 p-6 relative overflow-hidden">
         <div class="absolute top-0 right-0 p-2 flex gap-2">
